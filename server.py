@@ -105,6 +105,8 @@ def initialize_sheets():
 def sync_student():
     try:
         data = request.json
+        print(f"👤 Nhận request sync student: {data}")
+        
         student_data = data['studentData']
         stats = data['stats']
         service = get_sheets_service()
@@ -159,6 +161,8 @@ def sync_student():
 def sync_attendance():
     try:
         data = request.json
+        print(f"📋 Nhận request sync attendance: {data}")
+        
         attendance = data['attendanceRecord']
         student = data['studentData']
         service = get_sheets_service()
@@ -175,15 +179,19 @@ def sync_attendance():
             'Có mặt'
         ]]
         
-        service.spreadsheets().values().append(
+        print(f"📝 Ghi vào sheet: {row}")
+        
+        result = service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
             range=SHEETS['attendance'],
             valueInputOption='RAW',
             body={'values': row}
         ).execute()
         
+        print(f"✅ Đồng bộ điểm danh thành công: {result.get('updates')}")
         return jsonify({'success': True})
     except Exception as e:
+        print(f"❌ Lỗi sync attendance: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # Sync quiz
@@ -191,6 +199,8 @@ def sync_attendance():
 def sync_quiz():
     try:
         data = request.json
+        print(f"📝 Nhận request sync quiz: {data}")
+        
         quiz = data['quizRecord']
         student = data['studentData']
         service = get_sheets_service()
@@ -211,15 +221,19 @@ def sync_quiz():
             f"{percentage}%"
         ]]
         
-        service.spreadsheets().values().append(
+        print(f"📝 Ghi vào sheet: {row}")
+        
+        result = service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
             range=SHEETS['quiz'],
             valueInputOption='RAW',
             body={'values': row}
         ).execute()
         
+        print(f"✅ Đồng bộ quiz thành công: {result.get('updates')}")
         return jsonify({'success': True})
     except Exception as e:
+        print(f"❌ Lỗi sync quiz: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # Sync all data

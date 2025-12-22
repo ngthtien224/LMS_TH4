@@ -1,5 +1,8 @@
 // Google Sheets Integration - Backend API Version
-const API_BASE_URL = 'http://localhost:3000/api';
+// Tự động phát hiện URL backend (local hoặc production)
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
+    : window.location.origin + '/api';
 
 // Kiểm tra cấu hình Google Sheets (luôn trả về true vì backend đã cấu hình)
 function isGoogleSheetsConfigured() {
@@ -123,15 +126,27 @@ async function syncAllDataToSheets() {
 
 // Đồng bộ tự động sau mỗi hành động
 async function autoSyncToSheets(type, data) {
+    console.log('🔄 Bắt đầu đồng bộ:', type, data);
+    
     if (!isGoogleSheetsConfigured()) {
+        console.log('⚠️ Google Sheets chưa được cấu hình');
         return; // Không làm gì nếu chưa cấu hình
+    }
+    
+    if (!studentData) {
+        console.error('❌ Thiếu thông tin studentData');
+        return false;
     }
     
     try {
         if (type === 'attendance') {
+            console.log('📋 Đồng bộ điểm danh...');
             await syncAttendanceToSheets(data, studentData);
+            console.log('✅ Đồng bộ điểm danh thành công');
         } else if (type === 'quiz') {
+            console.log('📝 Đồng bộ quiz...');
             await syncQuizToSheets(data, studentData);
+            console.log('✅ Đồng bộ quiz thành công');
         }
         
         // Cập nhật thông tin học sinh
@@ -145,11 +160,14 @@ async function autoSyncToSheets(type, data) {
                 ? Math.max(...quizData.map(q => q.score))
                 : 0
         };
+        console.log('👤 Cập nhật thông tin học sinh...', stats);
         await syncStudentToSheets(studentData, stats);
+        console.log('✅ Cập nhật thông tin học sinh thành công');
         
         return true;
     } catch (error) {
-        console.error('Lỗi tự động đồng bộ:', error);
+        console.error('❌ Lỗi tự động đồng bộ:', error);
+        console.error('Chi tiết lỗi:', error.message);
         // Không throw error để không làm gián đoạn ứng dụng
         return false;
     }
