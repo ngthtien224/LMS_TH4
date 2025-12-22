@@ -89,8 +89,8 @@ def initialize_sheets():
         # Headers for each sheet
         requests_data = [
             {
-                'range': f"{SHEETS['students']}!A1:H1",
-                'values': [['Mã sinh viên', 'Họ tên', 'Môn', 'Nộp bài', 'Quiz', 'Điểm danh', 'Tổng điểm', 'Ghi chú']]
+                'range': f"{SHEETS['students']}!A1:G1",
+                'values': [['Họ tên', 'Môn', 'Nộp bài', 'Quiz', 'Điểm danh', 'Tổng điểm', 'Ghi chú']]
             },
             {
                 'range': f"{SHEETS['attendance']}!A1:E1",
@@ -131,49 +131,62 @@ def sync_student():
         stats = data['stats']
         service = get_sheets_service()
         
-        # Check if student exists (kiểm tra theo mã sinh viên)
+        # Check if student exists (kiểm tra theo tên)
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
             range=f"{SHEETS['students']}!A:A"
         ).execute()
         
         values = result.get('values', [])
-        student_ids = [row[0] for row in values[1:] if row]  # Bỏ header, lấy cột A (Mã sinh viên)
+        student_names = [row[0] for row in values[1:] if row]  # Bỏ header, lấy cột A (Họ tên)
         
-        # Tính tổng điểm: Điểm danh + Quiz
-        total_score = stats.get('totalAttendance', 0) + stats.get('averageScore', 0)
+        print(f"📋 Danh sách học sinh hiện có: {student_names}")
+        
+        # Lấy điểm số từ stats
+        quiz_score = stats.get('averageScore', 0)  # Điểm quiz trung bình
+        attendance_count = stats.get('totalAttendance', 0)  # Số lần điểm danh
+        
+        # Tính tổng điểm: Điểm quiz + Số lần điểm danh
+        total_score = quiz_score + attendance_count
         
         row = [[
-            student_data['id'],  # Mã sinh viên
-            student_data['name'],  # Họ tên
-            'Hệ thống kinh doanh thương mại',  # Môn học mặc định
-            '',  # Nộp bài - để trống
-            stats.get('averageScore', 0),  # Quiz
-            stats.get('totalAttendance', 0),  # Điểm danh
-            total_score,  # Tổng điểm
-            ''  # Ghi chú - để trống
+            student_data['name'],  # A: Họ tên
+            'Hệ thống kinh doanh thương mại',  # B: Môn
+            '',  # C: Nộp bài - để trống
+            quiz_score,  # D: Quiz (điểm trung bình)
+            attendance_count,  # E: Điểm danh (số lần)
+            total_score,  # F: Tổng điểm
+            ''  # G: Ghi chú - để trống
         ]]
         
-        if student_data['id'] in student_ids:
-            # Update existing (tìm theo mã sinh viên)
-            index = student_ids.index(student_data['id']) + 2  # +1 cho header, +1 cho index
-            service.spreadsheets().values().update(
+        print(f"📝 Dữ liệu chuẩn bị ghi: {row}")
+        
+        if student_data['name'] in student_names:
+            # Update existing (tìm theo tên)
+            index = student_names.index(student_data['name']) + 2  # +1 cho header, +1 cho index
+            print(f"🔄 Cập nhật học sinh tại dòng {index}")
+            result = service.spreadsheets().values().update(
                 spreadsheetId=SPREADSHEET_ID,
-                range=f"{SHEETS['students']}!A{index}:H{index}",
+                range=f"{SHEETS['students']}!A{index}:G{index}",
                 valueInputOption='RAW',
                 body={'values': row}
             ).execute()
+            print(f"✅ Cập nhật thành công: {result.get('updatedCells')} cells")
+            print(f"✅ Cập nhật thành công: {result.get('updatedCells')} cells")
         else:
             # Append new
-            service.spreadsheets().values().append(
+            print(f"➕ Thêm học sinh mới: {student_data['name']}")
+            result = service.spreadsheets().values().append(
                 spreadsheetId=SPREADSHEET_ID,
                 range=SHEETS['students'],
                 valueInputOption='RAW',
                 body={'values': row}
             ).execute()
+            print(f"✅ Thêm thành công: {result.get('updates')}")
         
         return jsonify({'success': True})
     except Exception as e:
+        print(f"❌ Lỗi sync student: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # Sync attendance
