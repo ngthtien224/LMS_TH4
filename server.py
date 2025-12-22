@@ -224,7 +224,6 @@ def sync_student():
                 body={'values': row}
             ).execute()
             print(f"✅ Cập nhật thành công: {result.get('updatedCells')} cells")
-            print(f"✅ Cập nhật thành công: {result.get('updatedCells')} cells")
         else:
             # Append new
             print(f"➕ Thêm học sinh mới: {student_data['name']}")
