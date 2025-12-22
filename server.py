@@ -175,6 +175,25 @@ def sync_student():
         stats = data['stats']
         service = get_sheets_service()
         
+        # Check if sheet has header (kiểm tra xem dòng đầu có phải header không)
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{SHEETS['students']}!A1:G1"
+        ).execute()
+        
+        first_row = result.get('values', [])
+        
+        # Nếu chưa có header hoặc header sai, tạo mới
+        if not first_row or first_row[0][0] != 'Mã học viên':
+            print("🔧 Chưa có header, đang tạo header...")
+            service.spreadsheets().values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=f"{SHEETS['students']}!A1:G1",
+                valueInputOption='RAW',
+                body={'values': [['Mã học viên', 'Họ tên', 'Ngày đăng ký', 'Tổng điểm danh', 'Tổng quiz', 'Điểm TB', 'Điểm cao nhất']]}
+            ).execute()
+            print("✅ Đã tạo header")
+        
         # Check if student exists (kiểm tra theo mã học viên)
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
@@ -251,6 +270,25 @@ def sync_attendance():
         student = data['studentData']
         service = get_sheets_service()
         
+        # Check if sheet has header
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{SHEETS['attendance']}!A1:E1"
+        ).execute()
+        
+        first_row = result.get('values', [])
+        
+        # Nếu chưa có header, tạo mới
+        if not first_row or first_row[0][0] != 'Mã học viên':
+            print("🔧 Chưa có header cho Điểm danh, đang tạo...")
+            service.spreadsheets().values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=f"{SHEETS['attendance']}!A1:E1",
+                valueInputOption='RAW',
+                body={'values': [['Mã học viên', 'Họ tên', 'Ngày', 'Giờ', 'Trạng thái']]}
+            ).execute()
+            print("✅ Đã tạo header")
+        
         # Format date from YYYY-MM-DD to DD/MM/YYYY
         date_parts = attendance['date'].split('-')
         formatted_date = f"{date_parts[2]}/{date_parts[1]}/{date_parts[0]}"
@@ -288,6 +326,25 @@ def sync_quiz():
         quiz = data['quizRecord']
         student = data['studentData']
         service = get_sheets_service()
+        
+        # Check if sheet has header
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{SHEETS['quiz']}!A1:G1"
+        ).execute()
+        
+        first_row = result.get('values', [])
+        
+        # Nếu chưa có header, tạo mới
+        if not first_row or first_row[0][0] != 'Mã học viên':
+            print("🔧 Chưa có header cho Quiz, đang tạo...")
+            service.spreadsheets().values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=f"{SHEETS['quiz']}!A1:G1",
+                valueInputOption='RAW',
+                body={'values': [['Mã học viên', 'Họ tên', 'Ngày', 'Điểm', 'Số câu đúng', 'Tổng câu hỏi', 'Phần trăm']]}
+            ).execute()
+            print("✅ Đã tạo header")
         
         percentage = round((quiz['correctAnswers'] / quiz['totalQuestions']) * 100)
         
