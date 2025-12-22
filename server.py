@@ -92,7 +92,7 @@ def initialize_sheets():
         requests_data = [
             {
                 'range': f"{SHEETS['students']}!A1:G1",
-                'values': [['Họ tên', 'Môn', 'Nộp bài', 'Quiz', 'Điểm danh', 'Tổng điểm', 'Ghi chú']]
+                'values': [['Mã học viên', 'Họ tên', 'Ngày đăng ký', 'Tổng điểm danh', 'Tổng quiz', 'Điểm TB', 'Điểm cao nhất']]
             },
             {
                 'range': f"{SHEETS['attendance']}!A1:E1",
@@ -175,39 +175,47 @@ def sync_student():
         stats = data['stats']
         service = get_sheets_service()
         
-        # Check if student exists (kiểm tra theo tên)
+        # Check if student exists (kiểm tra theo mã học viên)
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
             range=f"{SHEETS['students']}!A:A"
         ).execute()
         
         values = result.get('values', [])
-        student_names = [row[0] for row in values[1:] if row]  # Bỏ header, lấy cột A (Họ tên)
+        student_ids = [row[0] for row in values[1:] if row]  # Bỏ header, lấy cột A (Mã học viên)
         
-        print(f"📋 Danh sách học sinh hiện có: {student_names}")
+        print(f"📋 Danh sách mã học viên hiện có: {student_ids}")
         
-        # Lấy điểm số từ stats
-        quiz_score = stats.get('averageScore', 0)  # Điểm quiz trung bình
-        attendance_count = stats.get('totalAttendance', 0)  # Số lần điểm danh
+        # Lấy dữ liệu từ stats
+        total_attendance = stats.get('totalAttendance', 0)  # Tổng số lần điểm danh
+        total_quizzes = stats.get('totalQuizzes', 0)  # Tổng số quiz đã làm
+        average_score = stats.get('averageScore', 0)  # Điểm trung bình
+        highest_score = stats.get('highestScore', 0)  # Điểm cao nhất
         
-        # Tính tổng điểm: Điểm quiz + Số lần điểm danh
-        total_score = quiz_score + attendance_count
+        # Format ngày đăng ký (lấy từ studentData hoặc dùng ngày hiện tại)
+        from datetime import datetime
+        if 'registeredDate' in student_data:
+            reg_date = student_data['registeredDate'][:10]  # YYYY-MM-DD
+            date_parts = reg_date.split('-')
+            formatted_date = f"{date_parts[2]}/{date_parts[1]}/{date_parts[0]}"  # DD/MM/YYYY
+        else:
+            formatted_date = datetime.now().strftime('%d/%m/%Y')
         
         row = [[
-            student_data['name'],  # A: Họ tên
-            'Hệ thống kinh doanh thương mại',  # B: Môn
-            '',  # C: Nộp bài - để trống
-            quiz_score,  # D: Quiz (điểm trung bình)
-            attendance_count,  # E: Điểm danh (số lần)
-            total_score,  # F: Tổng điểm
-            ''  # G: Ghi chú - để trống
+            student_data['id'],  # A: Mã học viên
+            student_data['name'],  # B: Họ tên
+            formatted_date,  # C: Ngày đăng ký
+            total_attendance,  # D: Tổng điểm danh
+            total_quizzes,  # E: Tổng quiz
+            average_score,  # F: Điểm TB
+            highest_score  # G: Điểm cao nhất
         ]]
         
         print(f"📝 Dữ liệu chuẩn bị ghi: {row}")
         
-        if student_data['name'] in student_names:
-            # Update existing (tìm theo tên)
-            index = student_names.index(student_data['name']) + 2  # +1 cho header, +1 cho index
+        if student_data['id'] in student_ids:
+            # Update existing (tìm theo mã học viên, KHÔNG tạo dòng mới)
+            index = student_ids.index(student_data['id']) + 2  # +1 cho header, +1 cho index
             print(f"🔄 Cập nhật học sinh tại dòng {index}")
             result = service.spreadsheets().values().update(
                 spreadsheetId=SPREADSHEET_ID,
