@@ -59,7 +59,7 @@ function saveStudentInfo() {
 function showMainSections() {
     document.getElementById('studentInfoSection').style.display = 'none';
     document.getElementById('attendanceSection').style.display = 'block';
-    document.getElementById('quizSection').style.display = 'block';
+    // document.getElementById('quizSection').style.display = 'block'; // ĐÃ TẮT QUIZ
     document.getElementById('statisticsSection').style.display = 'block';
     // Google Sheets section ẩn cho sinh viên
     
@@ -68,9 +68,9 @@ function showMainSections() {
     document.getElementById('displayId').textContent = studentData.id;
     
     checkTodayAttendance();
-    checkTodayQuiz();
+    // checkTodayQuiz(); // ĐÃ TẮT QUIZ
     displayAttendanceHistory();
-    displayQuizHistory();
+    // displayQuizHistory(); // ĐÃ TẮT QUIZ
     // updateGoogleSheetsStatus(); - Ẩn cho sinh viên
 }
 
