@@ -86,6 +86,8 @@ def initialize_sheets():
     try:
         service = get_sheets_service()
         
+        print("🔧 Đang khởi tạo headers cho các sheet...")
+        
         # Headers for each sheet
         requests_data = [
             {
@@ -102,19 +104,61 @@ def initialize_sheets():
             }
         ]
         
+        # Cập nhật headers
         for req in requests_data:
-            service.spreadsheets().values().update(
+            print(f"📝 Tạo header cho {req['range']}: {req['values']}")
+            result = service.spreadsheets().values().update(
                 spreadsheetId=SPREADSHEET_ID,
                 range=req['range'],
                 valueInputOption='RAW',
                 body={'values': req['values']}
             ).execute()
+            print(f"✅ Đã tạo header: {result.get('updatedCells')} cells")
+        
+        # Format headers (in đậm, nền màu)
+        batch_update_request = {
+            'requests': [
+                {
+                    'repeatCell': {
+                        'range': {
+                            'sheetId': 0,  # Sheet đầu tiên
+                            'startRowIndex': 0,
+                            'endRowIndex': 1,
+                            'startColumnIndex': 0,
+                            'endColumnIndex': 7
+                        },
+                        'cell': {
+                            'userEnteredFormat': {
+                                'backgroundColor': {'red': 0.2, 'green': 0.6, 'blue': 0.9},
+                                'textFormat': {
+                                    'foregroundColor': {'red': 1.0, 'green': 1.0, 'blue': 1.0},
+                                    'fontSize': 11,
+                                    'bold': True
+                                },
+                                'horizontalAlignment': 'CENTER'
+                            }
+                        },
+                        'fields': 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
+                    }
+                }
+            ]
+        }
+        
+        try:
+            service.spreadsheets().batchUpdate(
+                spreadsheetId=SPREADSHEET_ID,
+                body=batch_update_request
+            ).execute()
+            print("🎨 Đã format header")
+        except Exception as format_error:
+            print(f"⚠️ Không thể format header: {format_error}")
         
         return jsonify({
             'success': True,
-            'message': 'Đã khởi tạo sheets thành công!'
+            'message': 'Đã khởi tạo sheets thành công với headers đầy đủ!'
         })
     except Exception as e:
+        print(f"❌ Lỗi khởi tạo sheets: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)
