@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Học Tập - Điểm Danh & Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Hệ Thống Học Tập</h1>
+            <p class="subtitle">Điểm danh và làm quiz hàng ngày</p>
+            <div id="currentDate"></div>
+        </header>
+
+        <!-- Phần thông tin học viên -->
+        <section class="student-info" id="studentInfoSection">
+            <h2>👤 Thông Tin Học Viên</h2>
+            <div class="form-group">
+                <label for="studentName">Họ và tên:</label>
+                <input type="text" id="studentName" placeholder="Nhập họ tên của bạn">
+            </div>
+            <div class="form-group">
+                <label for="studentId">Mã học viên:</label>
+                <input type="text" id="studentId" placeholder="Nhập mã học viên">
+            </div>
+            <button class="btn btn-primary" onclick="saveStudentInfo()">Lưu thông tin</button>
+        </section>
+
+        <!-- Phần điểm danh -->
+        <section class="attendance-section" id="attendanceSection" style="display: none;">
+            <h2>📋 Điểm Danh Hôm Nay</h2>
+            <div class="attendance-card">
+                <div class="student-display">
+                    <p><strong>Học viên:</strong> <span id="displayName"></span></p>
+                    <p><strong>Mã SV:</strong> <span id="displayId"></span></p>
+                </div>
+                <div id="attendanceStatus" class="status-message"></div>
+                <button class="btn btn-success" id="attendanceBtn" onclick="markAttendance()">
+                    ✓ Điểm danh
+                </button>
+            </div>
+            
+            <div class="attendance-history">
+                <h3>Lịch sử điểm danh</h3>
+                <div id="attendanceHistory"></div>
+            </div>
+        </section>
+
+        <!-- Phần Quiz -->
+        <section class="quiz-section" id="quizSection" style="display: none;">
+            <h2>📝 Quiz Hôm Nay</h2>
+            <div class="quiz-card">
+                <div id="quizStatus" class="status-message"></div>
+                <div id="quizContainer" style="display: none;">
+                    <div class="quiz-header">
+                        <span>Câu hỏi <span id="currentQuestion">1</span>/<span id="totalQuestions">5</span></span>
+                        <span id="timer">⏱️ <span id="timeLeft">60</span>s</span>
+                    </div>
+                    
+                    <div class="question-container">
+                        <h3 id="questionText"></h3>
+                        <div id="optionsContainer" class="options-container"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Câu tiếp theo →</button>
+                </div>
+                
+                <button class="btn btn-success" id="startQuizBtn" onclick="startQuiz()" style="display: none;">
+                    Bắt đầu Quiz
+                </button>
+                
+                <div id="quizResult" style="display: none;">
+                    <h3>🎉 Kết quả Quiz</h3>
+                    <div class="result-card">
+                        <p class="score">Điểm số: <span id="finalScore"></span></p>
+                        <p>Số câu đúng: <span id="correctAnswers"></span>/<span id="totalQuestionsResult"></span></p>
+                        <p class="result-message" id="resultMessage"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quiz-history">
+                <h3>Lịch sử làm quiz</h3>
+                <div id="quizHistory"></div>
+            </div>
+        </section>
+
+        <!-- Phần thống kê -->
+        <section class="statistics-section" id="statisticsSection" style="display: none;">
+            <h2>📊 Thống Kê</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <h4>Số ngày điểm danh</h4>
+                        <p class="stat-number" id="totalAttendance">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-content">
+                        <h4>Số quiz đã làm</h4>
+                        <p class="stat-number" id="totalQuizzes">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <h4>Điểm trung bình</h4>
+                        <p class="stat-number" id="averageScore">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-content">
+                        <h4>Điểm cao nhất</h4>
+                        <p class="stat-number" id="highestScore">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Phần cài đặt Google Sheets - Ẩn cho sinh viên -->
+        <section class="google-sheets-section" id="googleSheetsSection" style="display: none !important;">
+            <h2>☁️ Đồng Bộ Google Sheets</h2>
+            
+            <div class="sheets-status" id="sheetsStatus">
+                <div class="status-message success">
+                    <span id="sheetsStatusText">✅ Backend server đang kết nối với Google Sheets</span>
+                </div>
+            </div>
+            
+            <div class="sheets-sync" id="sheetsSync">
+                <h3>Đồng bộ dữ liệu</h3>
+                <div class="sync-info">
+                    <p>📝 <strong>Spreadsheet ID:</strong> 1TKmu6oRIEqyG2PfY__deAhp_8em9pkD7PdUUU9DqhfA</p>
+                    <p>✅ Backend server sử dụng service account credentials</p>
+                    <p>🔄 Dữ liệu sẽ tự động đồng bộ sau mỗi lần điểm danh và làm quiz</p>
+                    <p>⚠️ <strong>Lưu ý:</strong> Đảm bảo backend server đang chạy trên cổng 3000</p>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="syncAllData()">🔄 Đồng bộ toàn bộ dữ liệu</button>
+                    <button class="btn btn-primary" onclick="testConnection()">🔌 Kiểm tra kết nối</button>
+                </div>
+                
+                <div id="syncResult" class="sync-result"></div>
+            </div>
+        </section>
+
+        <footer>
+            <button class="btn btn-secondary" onclick="resetData()">🔄 Đặt lại dữ liệu</button>
+            <button class="btn btn-secondary" onclick="exportData()">📥 Xuất dữ liệu</button>
+        </footer>
+    </div>
+
+    <script src="quizData.js"></script>
+    <script src="googleSheets.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
