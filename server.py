@@ -69,8 +69,8 @@ def initialize_sheets():
         # Headers for each sheet
         requests_data = [
             {
-                'range': f"{SHEETS['students']}!A1:G1",
-                'values': [['Mã học viên', 'Họ tên', 'Ngày đăng ký', 'Tổng điểm danh', 'Tổng quiz', 'Điểm TB', 'Điểm cao nhất']]
+                'range': f"{SHEETS['students']}!A1:H1",
+                'values': [['Mã sinh viên', 'Họ tên', 'Môn', 'Nộp bài', 'Quiz', 'Điểm danh', 'Tổng điểm', 'Ghi chú']]
             },
             {
                 'range': f"{SHEETS['attendance']}!A1:E1",
@@ -109,31 +109,35 @@ def sync_student():
         stats = data['stats']
         service = get_sheets_service()
         
-        # Check if student exists
+        # Check if student exists (kiểm tra theo mã sinh viên)
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
             range=f"{SHEETS['students']}!A:A"
         ).execute()
         
         values = result.get('values', [])
-        student_ids = [row[0] for row in values if row]
+        student_ids = [row[0] for row in values[1:] if row]  # Bỏ header, lấy cột A (Mã sinh viên)
+        
+        # Tính tổng điểm: Điểm danh + Quiz
+        total_score = stats.get('totalAttendance', 0) + stats.get('averageScore', 0)
         
         row = [[
-            student_data['id'],
-            student_data['name'],
-            student_data['registeredDate'][:10],
-            stats.get('totalAttendance', 0),
-            stats.get('totalQuizzes', 0),
-            stats.get('averageScore', 0),
-            stats.get('highestScore', 0)
+            student_data['id'],  # Mã sinh viên
+            student_data['name'],  # Họ tên
+            'Hệ thống kinh doanh thương mại',  # Môn học mặc định
+            '',  # Nộp bài - để trống
+            stats.get('averageScore', 0),  # Quiz
+            stats.get('totalAttendance', 0),  # Điểm danh
+            total_score,  # Tổng điểm
+            ''  # Ghi chú - để trống
         ]]
         
         if student_data['id'] in student_ids:
-            # Update existing
-            index = student_ids.index(student_data['id']) + 1
+            # Update existing (tìm theo mã sinh viên)
+            index = student_ids.index(student_data['id']) + 2  # +1 cho header, +1 cho index
             service.spreadsheets().values().update(
                 spreadsheetId=SPREADSHEET_ID,
-                range=f"{SHEETS['students']}!A{index}:G{index}",
+                range=f"{SHEETS['students']}!A{index}:H{index}",
                 valueInputOption='RAW',
                 body={'values': row}
             ).execute()
