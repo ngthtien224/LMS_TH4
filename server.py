@@ -23,12 +23,27 @@ SHEETS = {
 # Initialize Google Sheets API
 def get_sheets_service():
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            CREDENTIALS_FILE, scopes=SCOPES)
+        # Thử đọc từ environment variable trước (cho Render/Production)
+        google_creds = os.environ.get('GOOGLE_KEY')
+        
+        if google_creds:
+            # Nếu có env variable, parse JSON string
+            creds_dict = json.loads(google_creds)
+            credentials = service_account.Credentials.from_service_account_info(
+                creds_dict, scopes=SCOPES)
+            print("🔑 Đã tải credentials từ biến môi trường GOOGLE_KEY")
+        else:
+            # Nếu không có env variable, đọc từ file (cho Local)
+            if not os.path.exists(CREDENTIALS_FILE):
+                raise FileNotFoundError(f"Không tìm thấy file {CREDENTIALS_FILE}")
+            credentials = service_account.Credentials.from_service_account_file(
+                CREDENTIALS_FILE, scopes=SCOPES)
+            print(f"✅ Đã tải credentials từ file {CREDENTIALS_FILE}")
+        
         service = build('sheets', 'v4', credentials=credentials)
         return service
     except Exception as e:
-        print(f"Error initializing Google Sheets: {e}")
+        print(f"❌ Error initializing Google Sheets: {e}")
         raise
 
 # Serve static files
