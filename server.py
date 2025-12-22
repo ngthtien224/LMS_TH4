@@ -29,6 +29,11 @@ def get_sheets_service():
         if google_creds:
             # Nếu có env variable, parse JSON string
             creds_dict = json.loads(google_creds)
+            
+            # FIX: Sửa lỗi xuống dòng trong private_key (quan trọng!)
+            # Khi copy vào Render, \n bị hiểu thành \\n, cần chuyển lại
+            creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
+            
             credentials = service_account.Credentials.from_service_account_info(
                 creds_dict, scopes=SCOPES)
             print("🔑 Đã tải credentials từ biến môi trường GOOGLE_KEY")
