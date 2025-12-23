@@ -16,7 +16,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 # Sheet names
 SHEETS = {
     'students': 'Danh sách học sinh',
-    'attendance': 'Điểm danh',
+    'attendance': 'Diemdanh',
     'quiz': 'Kết quả Quiz'
 }
 
