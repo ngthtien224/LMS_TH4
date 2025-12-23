@@ -349,7 +349,14 @@ function displayQuizHistory() {
 
 // Cập nhật thống kê
 function updateStatistics() {
-    document.getElementById('totalAttendance').textContent = attendanceData.length;
+    // Chỉ cập nhật attendance, quiz đã tắt
+    const attendanceElement = document.getElementById('totalAttendance');
+    if (attendanceElement) {
+        attendanceElement.textContent = attendanceData.length;
+    }
+    
+    // COMMENT: Các element quiz đã bị tắt, không cập nhật nữa
+    /*
     document.getElementById('totalQuizzes').textContent = quizData.length;
     
     if (quizData.length > 0) {
@@ -363,6 +370,7 @@ function updateStatistics() {
         document.getElementById('averageScore').textContent = '0';
         document.getElementById('highestScore').textContent = '0';
     }
+    */
 }
 
 // Đặt lại dữ liệu
