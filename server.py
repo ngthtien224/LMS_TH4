@@ -164,10 +164,15 @@ def initialize_sheets():
             'message': str(e)
         }), 500
 
-# Sync student
+# Sync student - ĐÃ TẮT
 @app.route('/api/sync-student', methods=['POST'])
 def sync_student():
     try:
+        # COMMENT: Tạm tắt việc lưu vào sheet Danh sách học sinh
+        print("⚠️ Sync student đã bị tắt")
+        return jsonify({'success': True, 'message': 'Sync student đã bị tắt'})
+        
+        """
         data = request.json
         print(f"👤 Nhận request sync student: {data}")
         
@@ -255,6 +260,7 @@ def sync_student():
             print(f"✅ Thêm thành công: {result.get('updates')}")
         
         return jsonify({'success': True})
+        """
     except Exception as e:
         print(f"❌ Lỗi sync student: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -264,23 +270,34 @@ def sync_student():
 def sync_attendance():
     try:
         data = request.json
-        print(f"📋 Nhận request sync attendance: {data}")
+        print(f"📋 ===== BẮT ĐẦU SYNC ATTENDANCE =====")
+        print(f"📋 Data nhận được: {json.dumps(data, indent=2, ensure_ascii=False)}")
         
         attendance = data['attendanceRecord']
         student = data['studentData']
+        
+        print(f"👤 Student info: ID={student['id']}, Name={student['name']}")
+        print(f"📅 Attendance: date={attendance['date']}, time={attendance['time']}")
+        
         service = get_sheets_service()
+        print(f"✅ Đã kết nối Google Sheets service")
+        
+        # Check sheet name
+        print(f"📊 Sheet name: '{SHEETS['attendance']}'")
         
         # Check if sheet has header
+        print(f"🔍 Kiểm tra header tại: {SHEETS['attendance']}!A1:E1")
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
             range=f"{SHEETS['attendance']}!A1:E1"
         ).execute()
         
         first_row = result.get('values', [])
+        print(f"📋 First row hiện tại: {first_row}")
         
         # Nếu chưa có header, tạo mới
-        if not first_row or first_row[0][0] != 'Mã học viên':
-            print("🔧 Chưa có header cho Điểm danh, đang tạo...")
+        if not first_row or (len(first_row[0]) > 0 and first_row[0][0] != 'Mã học viên'):
+            print("🔧 Chưa có header hoặc header sai, đang tạo...")
             service.spreadsheets().values().update(
                 spreadsheetId=SPREADSHEET_ID,
                 range=f"{SHEETS['attendance']}!A1:E1",
@@ -288,10 +305,13 @@ def sync_attendance():
                 body={'values': [['Mã học viên', 'Họ tên', 'Ngày', 'Giờ', 'Trạng thái']]}
             ).execute()
             print("✅ Đã tạo header")
+        else:
+            print("✅ Header đã tồn tại")
         
         # Format date from YYYY-MM-DD to DD/MM/YYYY
         date_parts = attendance['date'].split('-')
         formatted_date = f"{date_parts[2]}/{date_parts[1]}/{date_parts[0]}"
+        print(f"📅 Date formatted: {attendance['date']} -> {formatted_date}")
         
         row = [[
             student['id'],
@@ -301,7 +321,8 @@ def sync_attendance():
             'Có mặt'
         ]]
         
-        print(f"📝 Ghi vào sheet: {row}")
+        print(f"📝 Dữ liệu chuẩn bị ghi: {row}")
+        print(f"🎯 Ghi vào range: {SHEETS['attendance']}")
         
         result = service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
@@ -310,10 +331,14 @@ def sync_attendance():
             body={'values': row}
         ).execute()
         
-        print(f"✅ Đồng bộ điểm danh thành công: {result.get('updates')}")
+        print(f"✅ ===== ĐỒNG BỘ THÀNH CÔNG =====")
+        print(f"✅ Updates: {result.get('updates')}")
         return jsonify({'success': True})
     except Exception as e:
-        print(f"❌ Lỗi sync attendance: {str(e)}")
+        print(f"❌ ===== LỖI SYNC ATTENDANCE =====")
+        print(f"❌ Lỗi: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # Sync quiz
